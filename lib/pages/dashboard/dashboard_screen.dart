@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/appbar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -10,47 +11,60 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
+    // 画面の横幅を取得
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // 横幅に基づいてサイズを決定
+    double boxSize = screenWidth < 600 ? 150 : 200;
+
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 70, // 高さを調整
-            backgroundColor: const Color.fromARGB(255, 243, 244, 245),
-            shape: const Border(
-                bottom: BorderSide(color: Colors.black, width: 1.2)),
-            title: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "ここになんかいれる",
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red),
+        appBar: const CustomAppBar(title: "在庫管理アプリケーション"),
+        body: Center(
+          child: Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.center,
+            children: [
+              // カードを複数生成
+              for (var i = 1; i <= 10; i++)
+                _buildDashboardCard(
+                  title: "機能 $i",
+                  onTap: () {
+                    // カードクリック時の動作
+                    print("機能 $i がクリックされました");
+                  },
+                  boxSize: boxSize,
                 ),
-                Row(
-                  //mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    SizedBox(
-                      //padding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                      child: TextButton(onPressed: null, child: Text("ポータル")),
-                    ),
-                    SizedBox(
-                      //padding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                      child:
-                          TextButton(onPressed: null, child: Text("ダッシュボード")),
-                    ),
-                    SizedBox(
-                      // padding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                      child: TextButton(onPressed: null, child: Text("在庫一覧")),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            ],
           ),
-          body: const Center(
-            child: Text("ss"),
-          )),
+        ),
+      ),
+    );
+  }
+
+  // アイコンカードを作成するウィジェット
+  Widget _buildDashboardCard(
+      {required String title,
+      required VoidCallback onTap,
+      required double boxSize}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: boxSize,
+        width: boxSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color.fromARGB(255, 195, 195, 195),
+        ),
+        child: Center(
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
     );
   }
 }
