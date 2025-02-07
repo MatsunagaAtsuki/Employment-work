@@ -17,6 +17,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  mobile_scanner: ^3.5.7  # バーコードスキャナー
+  mysql1: ^0.19.0  # MySQL接続用
 
 flutter:
   uses-material-design: true
