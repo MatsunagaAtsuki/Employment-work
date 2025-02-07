@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/appbar.dart';
+import '../darcode/barcode_scan_screen.dart'; // スキャンページのインポート
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,28 +18,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // 横幅に基づいてサイズを決定
     double boxSize = screenWidth < 600 ? 150 : 200;
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: const CustomAppBar(title: "在庫管理アプリケーション"),
-        body: Center(
-          child: Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            alignment: WrapAlignment.center,
-            children: [
-              // カードを複数生成
-              for (var i = 1; i <= 10; i++)
-                _buildDashboardCard(
-                  title: "機能 $i",
-                  onTap: () {
-                    // カードクリック時の動作
+    return Scaffold(
+      appBar: const CustomAppBar(title: "在庫管理アプリケーション"),
+      body: Center(
+        child: Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          alignment: WrapAlignment.center,
+          children: [
+            // カードを複数生成
+            for (var i = 1; i <= 10; i++)
+              _buildDashboardCard(
+                title: i == 1 ? "バーコードスキャン" : "機能 $i", // 機能1のタイトルを変更
+                onTap: () {
+                  if (i == 1) {
+                    // 機能1がクリックされたらスキャンページへ遷移
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => BarcodeScannerScreen()),
+                    );
+                  } else {
                     print("機能 $i がクリックされました");
-                  },
-                  boxSize: boxSize,
-                ),
-            ],
-          ),
+                  }
+                },
+                boxSize: boxSize,
+              ),
+          ],
         ),
       ),
     );
