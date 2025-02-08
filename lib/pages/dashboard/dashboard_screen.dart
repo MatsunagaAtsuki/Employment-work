@@ -1,6 +1,7 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import '../../utils/appbar.dart';
-import '../darcode/barcode_scan_screen.dart'; // スキャンページのインポート
+import 'package:inventory_manager/pages/darcode/barcode_scan_screen.dart';
+import 'package:inventory_manager/utils/appbar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -10,12 +11,30 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  late List<dynamic> data;  // MySQLから取得したデータ
+
+  @override
+  void initState() {
+    super.initState();
+    data = [];
+  }
+
+  // Firebase Functionsからデータを取得
+  Future<void> _fetchDataFromFirebase() async {
+    try {
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('getDataFromMySQL');
+      final response = await callable.call();
+      setState(() {
+        data = response.data;
+      });
+    } catch (e) {
+      print("Error fetching data: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 画面の横幅を取得
     double screenWidth = MediaQuery.of(context).size.width;
-
-    // 横幅に基づいてサイズを決定
     double boxSize = screenWidth < 600 ? 150 : 200;
 
     return Scaffold(
@@ -29,20 +48,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // カードを複数生成
             for (var i = 1; i <= 10; i++)
               _buildDashboardCard(
-                title: i == 1 ? "バーコードスキャン" : "機能 $i", // 機能1のタイトルを変更
+                title: i == 1 ? "バーコードスキャン" : "機能 $i",
                 onTap: () {
                   if (i == 1) {
-                    // 機能1がクリックされたらスキャンページへ遷移
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => BarcodeScannerScreen()),
+                      MaterialPageRoute(builder: (context) => BarcodeScannerScreen()),
                     );
+                  } else if (i == 2) {
+                    // 機能2がクリックされたらFirebase Functionsを呼び出す
+                    _fetchDataFromFirebase();
                   } else {
                     print("機能 $i がクリックされました");
                   }
                 },
                 boxSize: boxSize,
+              ),
+            // データ表示
+            if (data.isNotEmpty)
+              Column(
+                children: data.map((item) {
+                  return ListTile(
+                    title: Text("Item: ${item['your_column_name']}"),  // データに合わせてカラム名を変更
+                  );
+                }).toList(),
               ),
           ],
         ),
