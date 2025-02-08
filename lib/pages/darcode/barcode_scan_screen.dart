@@ -27,6 +27,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   String barcodeData = "バーコードをスキャンしてください";
   String productName = "";
   String productPrice = "";
+  final MobileScannerController scannerController = MobileScannerController();
 
   Future<void> fetchProductData(String barcode) async {
     try {
@@ -48,6 +49,10 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     }
   }
 
+  void startScan() {
+    scannerController.start();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,11 +62,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
           Expanded(
             flex: 3,
             child: MobileScanner(
+              controller: scannerController,
               onDetect: (capture) {
                 final List<Barcode> barcodes = capture.barcodes;
                 for (final barcode in barcodes) {
                   if (barcode.rawValue != null) {
                     fetchProductData(barcode.rawValue!);
+                    scannerController.stop();
                   }
                 }
               },
@@ -77,6 +84,11 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                   const SizedBox(height: 10),
                   Text("商品名: $productName", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   Text("価格: ¥$productPrice", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: startScan,
+                    child: const Text("スキャン開始"),
+                  ),
                 ],
               ),
             ),
@@ -84,5 +96,11 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    scannerController.dispose();
+    super.dispose();
   }
 }
