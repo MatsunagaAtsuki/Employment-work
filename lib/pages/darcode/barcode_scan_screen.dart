@@ -55,9 +55,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     setState(() {
       isScanning = true;
     });
-
-    // スキャンボタンを押したときに自動で固定バーコードを送信
-    fetchProductData("4912345678911");  // 固定バーコードを渡す
+    scannerController.start();
   }
 
   @override
