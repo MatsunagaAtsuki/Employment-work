@@ -28,28 +28,33 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   String productName = "";
   String productPrice = "";
   final MobileScannerController scannerController = MobileScannerController();
+  bool isScanning = false;
 
   Future<void> fetchProductData(String barcode) async {
+    setState(() {
+      barcodeData = barcode; // スキャン結果を即表示
+    });
     try {
       HttpsCallable callable =
           FirebaseFunctions.instance.httpsCallable('getProductByBarcode');
       final response = await callable.call({'barcode': barcode});
 
       setState(() {
-        barcodeData = barcode;
         productName = response.data['name'];
         productPrice = response.data['price'].toString();
       });
     } catch (e) {
       setState(() {
-        barcodeData = "商品が見つかりません";
-        productName = "";
+        productName = "商品が見つかりません";
         productPrice = "";
       });
     }
   }
 
   void startScan() {
+    setState(() {
+      isScanning = true;
+    });
     scannerController.start();
   }
 
@@ -64,9 +69,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             child: MobileScanner(
               controller: scannerController,
               onDetect: (capture) {
+                if (!isScanning) return;
                 final List<Barcode> barcodes = capture.barcodes;
                 for (final barcode in barcodes) {
                   if (barcode.rawValue != null) {
+                    setState(() {
+                      isScanning = false;
+                    });
                     fetchProductData(barcode.rawValue!);
                     scannerController.stop();
                   }
@@ -86,7 +95,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                   Text("価格: ¥$productPrice", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: startScan,
+                    onPressed: isScanning ? null : startScan,
                     child: const Text("スキャン開始"),
                   ),
                 ],
