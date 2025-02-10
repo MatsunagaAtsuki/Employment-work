@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventory_manager/pages/product/product_detail.dart';
 
 class AllProductScreen extends StatefulWidget {
   const AllProductScreen({super.key});
@@ -20,6 +21,7 @@ class _AllProductScreenState extends State<AllProductScreen> {
     setState(() {
       productList = [
         {
+          "商品ID": "1001",
           "商品名": "スマートフォン",
           "JANコード": "4901234567890",
           "価格": "¥50,000",
@@ -28,6 +30,7 @@ class _AllProductScreenState extends State<AllProductScreen> {
           "カテゴリーネーム": "電子機器"
         },
         {
+          "商品ID": "1002",
           "商品名": "ノートPC",
           "JANコード": "4909876543210",
           "価格": "¥120,000",
@@ -36,6 +39,7 @@ class _AllProductScreenState extends State<AllProductScreen> {
           "カテゴリーネーム": "PC・周辺機器"
         },
         {
+          "商品ID": "1003",
           "商品名": "ワイヤレスイヤホン",
           "JANコード": "4905678123456",
           "価格": "¥9,800",
@@ -44,6 +48,7 @@ class _AllProductScreenState extends State<AllProductScreen> {
           "カテゴリーネーム": "オーディオ"
         },
         {
+          "商品ID": "1004",
           "商品名": "スマートウォッチ",
           "JANコード": "4906789543210",
           "価格": "¥25,000",
@@ -78,7 +83,12 @@ class _AllProductScreenState extends State<AllProductScreen> {
               ),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
-                // 商品詳細ページに遷移する処理（後で追加）
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailScreen(productData: item),
+                  ),
+                );
               },
             ),
           );
