@@ -1,6 +1,6 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:inventory_manager/pages/darcode/barcode_scan_screen.dart';
+import 'package:inventory_manager/pages/barcode/barcode_scan_screen.dart';
+import 'package:inventory_manager/pages/product/allproduct.dart';
 import 'package:inventory_manager/utils/appbar.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -11,25 +11,24 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  late List<dynamic> data;  // MySQLから取得したデータ
+  List<Map<String, String>> data = []; // 仮データリスト
 
   @override
   void initState() {
     super.initState();
-    data = [];
+    _loadMockData(); // 仮データを読み込む
   }
 
-  // Firebase Functionsからデータを取得
-  Future<void> _fetchDataFromFirebase() async {
-    try {
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('getDataFromMySQL');
-      final response = await callable.call();
-      setState(() {
-        data = response.data;
-      });
-    } catch (e) {
-      print("Error fetching data: $e");
-    }
+  void _loadMockData() {
+    // 仮データを設定
+    setState(() {
+      data = [
+        {"商品ID": "1001", "商品名": "スマートフォン", "価格": "¥50,000", "在庫数": "15"},
+        {"商品ID": "1002", "商品名": "ノートPC", "価格": "¥120,000", "在庫数": "8"},
+        {"商品ID": "1003", "商品名": "ワイヤレスイヤホン", "価格": "¥9,800", "在庫数": "30"},
+        {"商品ID": "1004", "商品名": "スマートウォッチ", "価格": "¥25,000", "在庫数": "12"},
+      ];
+    });
   }
 
   @override
@@ -40,39 +39,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: const CustomAppBar(title: "在庫管理アプリケーション"),
       body: Center(
-        child: Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          alignment: WrapAlignment.center,
+        child: Column(
           children: [
-            // カードを複数生成
-            for (var i = 1; i <= 10; i++)
-              _buildDashboardCard(
-                title: i == 1 ? "バーコードスキャン" : "機能 $i",
-                onTap: () {
-                  if (i == 1) {
+            // ボタンエリア
+            Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              alignment: WrapAlignment.center,
+              children: [
+                _buildDashboardCard(
+                  title: "バーコードスキャン",
+                  onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => BarcodeScannerScreen()),
+                      MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
                     );
-                  } else if (i == 2) {
-                    // 機能2がクリックされたらFirebase Functionsを呼び出す
-                    _fetchDataFromFirebase();
-                  } else {
-                    print("機能 $i がクリックされました");
-                  }
-                },
-                boxSize: boxSize,
-              ),
-            // データ表示
-            if (data.isNotEmpty)
-              Column(
-                children: data.map((item) {
-                  return ListTile(
-                    title: Text("Item: ${item['your_column_name']}"),  // データに合わせてカラム名を変更
+                  },
+                  boxSize: boxSize,
+                ),
+                _buildDashboardCard(
+                  title: "商品一覧",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AllProductScreen()),
+                    );
+                  },
+                  boxSize: boxSize,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // データ表示エリア
+            Expanded(
+              child: ListView.builder(
+                itemCount: data.length,
+                itemBuilder: (context, index) {
+                  var item = data[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ListTile(
+                      title: Text(item["商品名"]!),
+                      subtitle: Text("価格: ${item["価格"]} | 在庫数: ${item["在庫数"]}"),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        // 商品の詳細ページに遷移する場合の処理
+                      },
+                    ),
                   );
-                }).toList(),
+                },
               ),
+            ),
           ],
         ),
       ),
@@ -80,10 +97,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // アイコンカードを作成するウィジェット
-  Widget _buildDashboardCard(
-      {required String title,
-      required VoidCallback onTap,
-      required double boxSize}) {
+  Widget _buildDashboardCard({
+    required String title,
+    required VoidCallback onTap,
+    required double boxSize,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
