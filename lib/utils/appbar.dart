@@ -22,35 +22,35 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 fontWeight: FontWeight.bold,
                 color: Colors.red),
           ),
-          Row(
+          const Row(
             children: [
-              SizedBox(
-                child: TextButton(
-                  onPressed: () {
-                    // ボタンの動作を実装
-                    print("ポータルがクリックされました");
-                  },
-                  child: const Text("ポータル"),
-                ),
-              ),
-              SizedBox(
-                child: TextButton(
-                  onPressed: () {
-                    // ボタンの動作を実装
-                    print("ダッシュボードがクリックされました");
-                  },
-                  child: const Text("ダッシュボード"),
-                ),
-              ),
-              SizedBox(
-                child: TextButton(
-                  onPressed: () {
-                    // ボタンの動作を実装
-                    print("在庫一覧がクリックされました");
-                  },
-                  child: const Text("在庫一覧"),
-                ),
-              ),
+              // SizedBox(
+              //   child: TextButton(
+              //     onPressed: () {
+              //       // ボタンの動作を実装
+              //       print("ポータルがクリックされました");
+              //     },
+              //     child: const Text("ポータル"),
+              //   ),
+              // ),
+              // SizedBox(
+              //   child: TextButton(
+              //     onPressed: () {
+              //       // ボタンの動作を実装
+              //       print("ダッシュボードがクリックされました");
+              //     },
+              //     child: const Text("ダッシュボード"),
+              //   ),
+              // ),
+              // SizedBox(
+              //   child: TextButton(
+              //     onPressed: () {
+              //       // ボタンの動作を実装
+              //       print("在庫一覧がクリックされました");
+              //     },
+              //     child: const Text("在庫一覧"),
+              //   ),
+              // ),
             ],
           ),
         ],

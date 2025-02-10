@@ -36,6 +36,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       productData = {
         "商品ID": "12345",
         "商品名": "テスト商品",
+        "JANコード": "4912345678911",
         "カテゴリ名": "電子機器",
         "価格": "¥2,980",
         "在庫数": "20",
@@ -123,7 +124,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PriceChangeScreen(productId: productData["商品ID"]!),
+                                builder: (context) => PriceChangeScreen(productId: productData["商品ID"]!, productName:productData["商品名"]!,),
                               ),
                             );
                           }
@@ -136,7 +137,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ScheduleScreen(productId: productData["商品ID"]!),
+                                builder: (context) => ScheduleScreen(productId: productData["商品ID"]!,productName:productData["商品名"]!,),
                               ),
                             );
                           }
