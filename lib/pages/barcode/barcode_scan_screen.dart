@@ -47,6 +47,14 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     });
   }
 
+  void restartScan() {
+    setState(() {
+      barcodeData = "";
+      productData.clear();
+    });
+    scannerController.start();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,29 +81,9 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  TextField(
-                    controller: barcodeController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "バーコード",
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {
-                          fetchProductData(barcodeController.text);
-                        },
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onSubmitted: (value) {
-                      fetchProductData(value);
-                    },
-                  ),
-                  const SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: () {
-                      fetchProductData(barcodeController.text);
-                    },
-                    child: const Text("検索"),
+                    onPressed: restartScan,
+                    child: const Text("再スキャン"),
                   ),
                 ],
               ),
