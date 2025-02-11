@@ -13,15 +13,16 @@ class BarcodeScannerScreen extends StatefulWidget {
 }
 
 class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
-  final MobileScannerController scannerController = MobileScannerController();
-  final TextEditingController barcodeController = TextEditingController();
+  final MobileScannerController scannerController = MobileScannerController(
+    formats: [BarcodeFormat.qrCode, BarcodeFormat.ean13, BarcodeFormat.upcA],
+    detectionSpeed: DetectionSpeed.normal,
+    autoStart: true,
+  );
 
-  bool isScanning = false;
+  final TextEditingController barcodeController = TextEditingController();
   bool isLoading = false;
   String barcodeData = "";
   Map<String, String> productData = {};
-
-  bool get isMobile => Platform.isAndroid || Platform.isIOS;
 
   Future<void> fetchProductData(String barcode) async {
     if (barcode.isEmpty) return;
@@ -46,14 +47,6 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     });
   }
 
-  void startScan() {
-    if (!isMobile) return;
-    setState(() {
-      isScanning = true;
-    });
-    scannerController.start();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,25 +54,21 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            if (isMobile)
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: MobileScanner(
-                  controller: scannerController,
-                  onDetect: (capture) {
-                    if (!isScanning) return;
-                    for (final barcode in capture.barcodes) {
-                      if (barcode.rawValue != null) {
-                        setState(() {
-                          isScanning = false;
-                        });
-                        fetchProductData(barcode.rawValue!);
-                        scannerController.stop();
-                      }
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: MobileScanner(
+                controller: scannerController,
+                onDetect: (capture) {
+                  for (final barcode in capture.barcodes) {
+                    if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
+                      fetchProductData(barcode.rawValue!);
+                      scannerController.stop();
+                      break;
                     }
-                  },
-                ),
+                  }
+                },
               ),
+            ),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -172,36 +161,16 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
     return Table(
       border: TableBorder.all(color: Colors.black, width: 1),
-      columnWidths: const {
-        0: FlexColumnWidth(2),
-        1: FlexColumnWidth(3),
-      },
-      children: productData.entries
-          .map((entry) => _buildTableRow(entry.key, entry.value))
-          .toList(),
+      children: productData.entries.map((entry) => _buildTableRow(entry.key, entry.value)).toList(),
     );
   }
 
   TableRow _buildTableRow(String label, String value) {
     return TableRow(
-      decoration: const BoxDecoration(color: Colors.white),
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(value, style: const TextStyle(fontSize: 18)),
-        ),
+        Padding(padding: const EdgeInsets.all(8.0), child: Text(label)),
+        Padding(padding: const EdgeInsets.all(8.0), child: Text(value)),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    if (isMobile) scannerController.dispose();
-    barcodeController.dispose();
-    super.dispose();
   }
 }
