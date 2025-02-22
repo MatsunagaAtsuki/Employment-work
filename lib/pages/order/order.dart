@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'order_confirmation.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -39,7 +40,7 @@ class _OrderScreenState extends State<OrderScreen> {
     List<Map<String, dynamic>> filteredList = productList.where((product) {
       return (selectedCategory == "すべて" || product["カテゴリー"] == selectedCategory) &&
           (product["商品名"].contains(_searchController.text) ||
-           product["商品ID"].contains(_searchController.text));
+              product["商品ID"].contains(_searchController.text));
     }).toList();
 
     return Scaffold(
@@ -99,8 +100,10 @@ class _OrderScreenState extends State<OrderScreen> {
                             icon: const Icon(Icons.remove),
                             onPressed: () {
                               setState(() {
-                                if (orderQuantities[item["商品ID"]] != null && orderQuantities[item["商品ID"]]! > 0) {
-                                  orderQuantities[item["商品ID"]] = orderQuantities[item["商品ID"]]! - 1;
+                                if (orderQuantities[item["商品ID"]] != null &&
+                                    orderQuantities[item["商品ID"]]! > 0) {
+                                  orderQuantities[item["商品ID"]] =
+                                      orderQuantities[item["商品ID"]]! - 1;
                                 }
                               });
                             },
@@ -110,7 +113,8 @@ class _OrderScreenState extends State<OrderScreen> {
                             icon: const Icon(Icons.add),
                             onPressed: () {
                               setState(() {
-                                orderQuantities[item["商品ID"]] = (orderQuantities[item["商品ID"]] ?? 0) + 1;
+                                orderQuantities[item["商品ID"]] =
+                                    (orderQuantities[item["商品ID"]] ?? 0) + 1;
                               });
                             },
                           ),
@@ -124,49 +128,18 @@ class _OrderScreenState extends State<OrderScreen> {
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _showOrderSummaryDialog();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        OrderConfirmationScreen(orderQuantities: orderQuantities, productList: productList),
+                  ),
+                );
               },
-              child: const Text("発注確定"),
+              child: const Text("発注確認"),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showOrderSummaryDialog() {
-    List<Map<String, dynamic>> orderedItems = productList.where((item) => orderQuantities[item["商品ID"]] != null && orderQuantities[item["商品ID"]]! > 0).toList();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("発注確認"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: orderedItems.map((item) {
-            int quantity = orderQuantities[item["商品ID"]]!;
-            int totalPrice = quantity * (item["価格"] as num).toInt();
-            return Text("${item["商品名"]}: $quantity 個 - ¥$totalPrice");
-          }).toList(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("キャンセル"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                orderQuantities.clear();
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("発注が確定しました")),
-              );
-            },
-            child: const Text("確定"),
-          ),
-        ],
       ),
     );
   }

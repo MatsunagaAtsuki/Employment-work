@@ -16,13 +16,27 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   final MobileScannerController scannerController = MobileScannerController(
     formats: [BarcodeFormat.qrCode, BarcodeFormat.ean13, BarcodeFormat.upcA],
     detectionSpeed: DetectionSpeed.normal,
-    autoStart: true,
+    autoStart: false,
   );
 
   final TextEditingController barcodeController = TextEditingController();
   bool isLoading = false;
+  bool isCameraAvailable = true;
+  bool hasScanned = false;
   String barcodeData = "";
   Map<String, String> productData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCameraAvailability();
+  }
+
+  void _checkCameraAvailability() {
+    setState(() {
+      isCameraAvailable = Platform.isAndroid || Platform.isIOS;
+    });
+  }
 
   Future<void> fetchProductData(String barcode) async {
     if (barcode.isEmpty) return;
@@ -44,12 +58,13 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         "仕入先名": "テスト商社",
       };
       isLoading = false;
+      hasScanned = true;
     });
   }
 
-  void restartScan() {
+  void startScanning() {
     setState(() {
-      barcodeData = "";
+      hasScanned = false;
       productData.clear();
     });
     scannerController.start();
@@ -62,32 +77,61 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.4,
-              child: MobileScanner(
-                controller: scannerController,
-                onDetect: (capture) {
-                  for (final barcode in capture.barcodes) {
-                    if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
-                      fetchProductData(barcode.rawValue!);
-                      scannerController.stop();
-                      break;
+            if (isCameraAvailable && !hasScanned)
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: MobileScanner(
+                  controller: scannerController,
+                  onDetect: (capture) {
+                    for (final barcode in capture.barcodes) {
+                      if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
+                        fetchProductData(barcode.rawValue!);
+                        scannerController.stop();
+                        break;
+                      }
                     }
-                  }
-                },
+                  },
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      "この端末ではカメラを使用できません。バーコードを手入力してください。",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: barcodeController,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: "バーコード",
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            fetchProductData(barcodeController.text);
+                          },
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onSubmitted: (value) {
+                        fetchProductData(value);
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: restartScan,
-                    child: const Text("再スキャン"),
-                  ),
-                ],
+            if (hasScanned)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: startScanning,
+                  child: const Text("再スキャン"),
+                ),
               ),
-            ),
             if (productData.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
