@@ -16,7 +16,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   final MobileScannerController scannerController = MobileScannerController(
     formats: [BarcodeFormat.qrCode, BarcodeFormat.ean13, BarcodeFormat.upcA],
     detectionSpeed: DetectionSpeed.normal,
-    autoStart: false,
+    autoStart: true,
   );
 
   final TextEditingController barcodeController = TextEditingController();
@@ -135,74 +135,14 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             if (productData.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: productData["商品ID"] != null
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PriceChangeScreen(
-                                    productId: productData["商品ID"]!,
-                                    productName: productData["商品名"]!,
-                                  ),
-                                ),
-                              );
-                            }
-                          : null,
-                      child: const Text("売価変更"),
-                    ),
-                    ElevatedButton(
-                      onPressed: productData["商品ID"] != null
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ScheduleScreen(
-                                    productId: productData["商品ID"]!,
-                                    productName: productData["商品名"]!,
-                                  ),
-                                ),
-                              );
-                            }
-                          : null,
-                      child: const Text("売価スケジュール作成"),
-                    ),
-                  ],
+                child: Column(
+                  children: productData.entries.map((entry) => Text("${entry.key}: ${entry.value}"))
+                      .toList(),
                 ),
               ),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : buildProductInfoTable(),
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget buildProductInfoTable() {
-    if (productData.isEmpty) {
-      return const Center(child: Text("商品情報を取得してください"));
-    }
-
-    return Table(
-      border: TableBorder.all(color: Colors.black, width: 1),
-      children: productData.entries.map((entry) => _buildTableRow(entry.key, entry.value)).toList(),
-    );
-  }
-
-  TableRow _buildTableRow(String label, String value) {
-    return TableRow(
-      children: [
-        Padding(padding: const EdgeInsets.all(8.0), child: Text(label)),
-        Padding(padding: const EdgeInsets.all(8.0), child: Text(value)),
-      ],
     );
   }
 }
