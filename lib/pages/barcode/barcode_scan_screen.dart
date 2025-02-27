@@ -124,7 +124,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                   ],
                 ),
               ),
-            if (hasScanned)
+            if (hasScanned && isCameraAvailable)
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
@@ -135,9 +135,64 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             if (productData.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Column(
-                  children: productData.entries.map((entry) => Text("${entry.key}: ${entry.value}"))
-                      .toList(),
+                child: Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: productData.entries.map((entry) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        "${entry.key}:",
+                                        textAlign: TextAlign.right,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      flex: 3,
+                                      child: Text(
+                                        entry.value,
+                                        textAlign: TextAlign.left,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )).toList(),
+                        ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ScheduleScreen(
+                                  productId: productData["商品ID"]!,
+                                  productName: productData["商品名"]!,
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text("スケジュール作成"),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],
