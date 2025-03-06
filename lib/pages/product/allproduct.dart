@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory_manager/pages/product/product_detail.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AllProductScreen extends StatefulWidget {
   const AllProductScreen({super.key});
@@ -12,61 +14,64 @@ class _AllProductScreenState extends State<AllProductScreen> {
   List<Map<String, String>> productList = [];
   String selectedCategory = "すべて";
   List<String> categories = ["すべて"];
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMockData();
+    fetchProducts(); // バックエンドから商品一覧を取得
   }
 
-  void _loadMockData() {
-    List<Map<String, String>> data = [
-      {
-        "商品ID": "1001",
-        "商品名": "スマートフォン",
-        "JANコード": "4901234567890",
-        "価格": "¥50,000",
-        "在庫数": "15",
-        "カテゴリーID": "1",
-        "カテゴリーネーム": "電子機器"
-      },
-      {
-        "商品ID": "1002",
-        "商品名": "ノートPC",
-        "JANコード": "4909876543210",
-        "価格": "¥120,000",
-        "在庫数": "8",
-        "カテゴリーID": "2",
-        "カテゴリーネーム": "PC・周辺機器"
-      },
-      {
-        "商品ID": "1003",
-        "商品名": "ワイヤレスイヤホン",
-        "JANコード": "4905678123456",
-        "価格": "¥9,800",
-        "在庫数": "30",
-        "カテゴリーID": "3",
-        "カテゴリーネーム": "オーディオ"
-      },
-      {
-        "商品ID": "1004",
-        "商品名": "スマートウォッチ",
-        "JANコード": "4906789543210",
-        "価格": "¥25,000",
-        "在庫数": "12",
-        "カテゴリーID": "1",
-        "カテゴリーネーム": "電子機器"
-      },
-    ];
-    
+  Future<void> fetchProducts() async {
     setState(() {
-      productList = data;
-      categories.addAll(data.map((e) => e["カテゴリーネーム"]!).toSet());
+      isLoading = true;
     });
+    // バックエンドURLを統一：127.0.0.1:5000/api/products
+    String url = 'http://127.0.0.1:5000/api/products';
+    if (selectedCategory != "すべて") {
+      url += '?category=$selectedCategory';
+    }
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        List<Map<String, String>> loadedProducts =
+            data.map<Map<String, String>>(
+              (item) => Map<String, String>.from(item),
+            ).toList();
+        // カテゴリのセットを更新
+        Set<String> categorySet = {"すべて"};
+        for (var product in loadedProducts) {
+          if (product.containsKey("カテゴリーネーム")) {
+            categorySet.add(product["カテゴリーネーム"]!);
+          }
+        }
+        setState(() {
+          productList = loadedProducts;
+          categories = categorySet.toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("商品一覧の取得に失敗しました。")),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("エラーが発生しました。")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // バックエンド側でカテゴリ絞り込み済みですが、念のためローカルでもフィルタリング
     List<Map<String, String>> filteredList = selectedCategory == "すべて"
         ? productList
         : productList.where((p) => p["カテゴリーネーム"] == selectedCategory).toList();
@@ -84,6 +89,7 @@ class _AllProductScreenState extends State<AllProductScreen> {
                   setState(() {
                     selectedCategory = newValue;
                   });
+                  fetchProducts(); // カテゴリ変更時に再取得
                 }
               },
               items: categories.map<DropdownMenuItem<String>>((String category) {
@@ -96,36 +102,38 @@ class _AllProductScreenState extends State<AllProductScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: filteredList.length,
-        itemBuilder: (context, index) {
-          var item = filteredList[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text(item["商品名"]!),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("JANコード: ${item["JANコード"]}"),
-                  Text("価格: ${item["価格"]}"),
-                  Text("在庫数: ${item["在庫数"]}"),
-                  Text("カテゴリ: ${item["カテゴリーネーム"]}"),
-                ],
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailScreen(productData: item),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: filteredList.length,
+              itemBuilder: (context, index) {
+                var item = filteredList[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ListTile(
+                    title: Text(item["商品名"]!),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("JANコード: ${item["JANコード"]}"),
+                        Text("価格: ${item["価格"]}"),
+                        Text("在庫数: ${item["在庫数"]}"),
+                        Text("カテゴリ: ${item["カテゴリーネーム"]}"),
+                      ],
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailScreen(productData: item),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }
