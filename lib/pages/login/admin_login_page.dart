@@ -40,7 +40,7 @@ class AdminLoginPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   // 仮の認証チェック
-                  if (usernameController.text == "admin" && passwordController.text == "password") {
+                  if (usernameController.text == "" && passwordController.text == "") {
                     Navigator.pop(context);
                     onLoginSuccess();
                   } else {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AdminScheduleScreen extends StatefulWidget {
   final Map<String, dynamic> productData;
@@ -11,6 +13,8 @@ class AdminScheduleScreen extends StatefulWidget {
 }
 
 class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
+  // 追加: 新しい価格入力用コントローラー
+  final TextEditingController _newPriceController = TextEditingController();
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
@@ -43,10 +47,80 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
     );
     if (picked != null) {
       setState(() {
-        controller.text = picked.format(context);
+        // 24時間形式でフォーマット
+        controller.text = picked.hour.toString().padLeft(2, '0') + ':' + picked.minute.toString().padLeft(2, '0');
       });
     }
   }
+
+Future<void> _saveSchedule() async {
+  String productId = widget.productData["商品ID"];
+  String newPrice = _newPriceController.text;
+  String startDate = _startDateController.text;
+  String startTime = _startTimeController.text;
+  String endDate = _endDateController.text;
+  String endTime = _endTimeController.text;
+
+  if (newPrice.isEmpty || startDate.isEmpty || startTime.isEmpty || endDate.isEmpty || endTime.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("すべての項目を入力してください。")),
+    );
+    return;
+  }
+
+  // 日付と時間を結合して DateTime オブジェクトを生成
+  try {
+    DateTime startDateTime = DateTime.parse("$startDate $startTime:00");
+    DateTime endDateTime = DateTime.parse("$endDate $endTime:00");
+
+    // 整合性チェック：開始日時が終了日時より前であること
+    if (!startDateTime.isBefore(endDateTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("開始日時は終了日時より前でなければなりません。")),
+      );
+      return;
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("日付または時間の形式が正しくありません。")),
+    );
+    return;
+  }
+
+  // バックエンドURLは実行環境に合わせて変更してください
+  String url = 'http://127.0.0.1:5000/api/admin/schedule';
+  Map<String, String> payload = {
+    "productId": productId,
+    "newPrice": newPrice,
+    "startDate": startDate,
+    "startTime": startTime,
+    "endDate": endDate,
+    "endTime": endTime,
+  };
+
+  try {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: json.encode(payload),
+    );
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("スケジュールが保存されました。")),
+      );
+      // 必要に応じて画面遷移や更新処理を追加
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("スケジュールの保存に失敗しました: ${response.body}")),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("エラーが発生しました。")),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +131,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 商品ID表示
             Row(
               children: [
                 const Expanded(
@@ -71,6 +146,29 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            // 追加: 新しい価格の入力欄
+            Row(
+              children: [
+                const Expanded(
+                  flex: 2,
+                  child: Text("新しい価格:", textAlign: TextAlign.right, style: TextStyle(fontSize: 18)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _newPriceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: "例: 150",
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // スケジュール開始日
             Row(
               children: [
                 const Expanded(
@@ -93,6 +191,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
               ],
             ),
             const SizedBox(height: 10),
+            // 開始時間
             Row(
               children: [
                 const Expanded(
@@ -115,6 +214,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
               ],
             ),
             const SizedBox(height: 10),
+            // スケジュール終了日
             Row(
               children: [
                 const Expanded(
@@ -137,6 +237,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
               ],
             ),
             const SizedBox(height: 10),
+            // 終了時間
             Row(
               children: [
                 const Expanded(
@@ -161,7 +262,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
             const SizedBox(height: 25),
             Center(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _saveSchedule,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: Text("スケジュールを保存", style: TextStyle(fontSize: 18)),

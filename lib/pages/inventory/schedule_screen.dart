@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ScheduleScreen extends StatefulWidget {
   final String productId;
   final String productName;
-  const ScheduleScreen({super.key, required this.productId, required this.productName});
+  final String productPrice;
+  const ScheduleScreen(
+      {super.key,
+      required this.productId,
+      required this.productName,
+      required this.productPrice});
 
   @override
   _ScheduleScreenState createState() => _ScheduleScreenState();
@@ -59,7 +66,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               children: [
                 _buildTableRow("商品名", widget.productName),
                 _buildTableRow("商品ID", widget.productId),
-                _buildTableRow("現在の価格", "¥${currentPrice?.toStringAsFixed(2) ?? '取得中'}"),
+                _buildTableRow(
+                    "現在の価格(￥)",widget.productPrice),
               ],
             ),
             const SizedBox(height: 20),
@@ -117,24 +125,32 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
+  // 修正済み：重複を排除してソートした時間リストを生成
   List<DropdownMenuItem<String>> _generateTimeOptions() {
-    List<DropdownMenuItem<String>> items = [];
+    Set<String> timeSet = {};
     DateTime now = DateTime.now();
     String nearestTime = _getNearestTime(now);
     bool reachedCurrentTime = false;
-
     for (int hour = 0; hour < 24; hour++) {
       for (int minute = 0; minute < 60; minute += 15) {
-        String time = "${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}";
-        if (time == nearestTime) {
+        String time =
+            "${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}";
+        if (!reachedCurrentTime && time == nearestTime) {
           reachedCurrentTime = true;
         }
         if (reachedCurrentTime) {
-          items.add(DropdownMenuItem(value: time, child: Text(time)));
+          timeSet.add(time);
         }
       }
     }
-    return items;
+    List<String> times = timeSet.toList()..sort((a, b) => a.compareTo(b));
+    if (selectedTime == null || !times.contains(selectedTime)) {
+      selectedTime = times.isNotEmpty ? times.first : null;
+      _startTimeController.text = selectedTime ?? '';
+    }
+    return times
+        .map((time) => DropdownMenuItem(value: time, child: Text(time)))
+        .toList();
   }
 
   TableRow _buildTableRow(String label, dynamic value) {
@@ -143,7 +159,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
+          child: Text(label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.right),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
@@ -158,26 +176,22 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     String startDate = _startDateController.text;
     String startTime = _startTimeController.text;
     String endDate = _endDateController.text;
-
     if (newPrice.isEmpty || startDate.isEmpty || startTime.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("新しい価格、開始日、開始時間を入力してください")),
       );
       return;
     }
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("売価スケジュールの確認"),
-        content: Text(
-          "商品名: ${widget.productName}\n"
-          "現在の価格: ¥${currentPrice?.toStringAsFixed(2)}\n"
-          "新しい価格: ¥$newPrice\n"
-          "開始日: $startDate $startTime\n"
-          "終了日: ${endDate.isNotEmpty ? endDate : 'なし'}\n\n"
-          "スケジュールを確定しますか？"
-        ),
+        content: Text("商品名: ${widget.productName}\n"
+            "現在の価格: ¥${currentPrice?.toStringAsFixed(2)}\n"
+            "新しい価格: ¥$newPrice\n"
+            "開始日: $startDate $startTime\n"
+            "終了日: ${endDate.isNotEmpty ? endDate : 'なし'}\n\n"
+            "スケジュールを確定しますか？"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -195,16 +209,35 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  void _applySchedule(String newPrice, String startDate, String startTime, String endDate) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(
-        "売価スケジュールを設定しました:\n"
-        "新価格: ¥$newPrice\n"
-        "開始日: $startDate $startTime\n"
-        "終了日: ${endDate.isNotEmpty ? endDate : 'なし'}"
-      )),
-    );
+  void _applySchedule(String newPrice, String startDate, String startTime,
+      String endDate) async {
+    final url = 'http://127.0.0.1:5000/api/schedule';
+    final payload = {
+      "productId": widget.productId,
+      "newPrice": newPrice,
+      "startDate": startDate,
+      "startTime": startTime,
+      "endDate": endDate,
+    };
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(payload),
+      );
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("売価スケジュールを設定しました")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("エラーが発生しました: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("エラーが発生しました")),
+      );
+    }
   }
-
-
 }

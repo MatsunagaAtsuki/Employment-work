@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EditProductScreen extends StatefulWidget {
   final Map<String, dynamic> productData;
@@ -15,20 +17,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
   late TextEditingController barcodeController;
   late TextEditingController priceController;
   late TextEditingController stockController;
-  String? selectedCategory;
-  String? selectedSupplier;
-  List<String> categories = ["カテゴリA", "カテゴリB", "カテゴリC"];
-  List<String> suppliers = ["サプライヤーX", "サプライヤーY", "サプライヤーZ"];
 
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(text: widget.productData['name']);
-    barcodeController = TextEditingController(text: widget.productData['barcode']);
-    priceController = TextEditingController(text: widget.productData['price'].toString());
-    stockController = TextEditingController(text: widget.productData['stock'].toString());
-    selectedCategory = widget.productData['category_id']?.toString();
-    selectedSupplier = widget.productData['supplier_id']?.toString();
+    nameController = TextEditingController(text: widget.productData['商品名']);
+    barcodeController = TextEditingController(text: widget.productData['JANコード']);
+    priceController = TextEditingController(text: widget.productData['価格'].toString());
+    stockController = TextEditingController(text: widget.productData['在庫数'].toString());
   }
 
   void _showPreviewDialog() {
@@ -41,12 +37,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("商品名: ${widget.productData['name']} → ${nameController.text}"),
-              Text("バーコード: ${widget.productData['barcode']} → ${barcodeController.text}"),
-              Text("価格: ¥${widget.productData['price']} → ¥${priceController.text}"),
-              Text("在庫数: ${widget.productData['stock']} → ${stockController.text}"),
-              Text("カテゴリ: ${widget.productData['category_id']} → ${selectedCategory ?? '未分類'}"),
-              Text("仕入先: ${widget.productData['supplier_id']} → ${selectedSupplier ?? '不明'}"),
+              Text("商品名: ${widget.productData['商品名']} → ${nameController.text}"),
+              Text("バーコード: ${widget.productData['JANコード']} → ${barcodeController.text}"),
+              Text("価格: ¥${widget.productData['価格']} → ¥${priceController.text}"),
+              Text("在庫数: ${widget.productData['在庫数']} → ${stockController.text}"),
             ],
           ),
           actions: [
@@ -67,11 +61,36 @@ class _EditProductScreenState extends State<EditProductScreen> {
     );
   }
 
-  void _updateProduct() {
+  void _updateProduct() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("商品が更新されました")),
-      );
+      // 更新する内容をペイロードにまとめる（カテゴリー・仕入先は含めない）
+      Map<String, dynamic> payload = {
+        "productId": widget.productData['商品ID'],
+        "name": nameController.text,
+        "barcode": barcodeController.text,
+        "price": double.tryParse(priceController.text),
+        "stock": int.tryParse(stockController.text),
+      };
+      // バックエンドURL（実行環境に合わせて必要なら変更）
+      String url = 'http://127.0.0.1:5000/api/products/update';
+      try {
+        final response = await http.put(Uri.parse(url),
+            headers: {"Content-Type": "application/json"},
+            body: json.encode(payload));
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("商品が更新されました")),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("更新に失敗しました: ${response.body}")),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("エラーが発生しました。")),
+        );
+      }
     }
   }
 
@@ -108,20 +127,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: "在庫数", border: OutlineInputBorder()),
                 validator: (value) => value!.isEmpty ? "在庫数を入力してください" : null,
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "カテゴリ", border: OutlineInputBorder()),
-                value: selectedCategory,
-                onChanged: (value) => setState(() => selectedCategory = value),
-                items: categories.map((category) => DropdownMenuItem(value: category, child: Text(category))).toList(),
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "仕入先", border: OutlineInputBorder()),
-                value: selectedSupplier,
-                onChanged: (value) => setState(() => selectedSupplier = value),
-                items: suppliers.map((supplier) => DropdownMenuItem(value: supplier, child: Text(supplier))).toList(),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
