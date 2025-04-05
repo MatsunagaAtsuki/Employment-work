@@ -89,6 +89,7 @@ Future<void> _saveSchedule() async {
 
   // バックエンドURLは実行環境に合わせて変更してください
   String url = 'http://127.0.0.1:5000/api/admin/schedule';
+  //String url = 'http://10.0.2.2:5000/api/admin/schedule';
   Map<String, String> payload = {
     "productId": productId,
     "newPrice": newPrice,

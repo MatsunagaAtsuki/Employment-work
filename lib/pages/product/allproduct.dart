@@ -28,6 +28,9 @@ class _AllProductScreenState extends State<AllProductScreen> {
     });
     // バックエンドURLを統一：127.0.0.1:5000/api/products
     String url = 'http://127.0.0.1:5000/api/products';
+    //String url = 'http://10.0.2.2:5000/api/products';
+    //String url = 'http://192.168.56.1:5000/api/products';
+    
     if (selectedCategory != "すべて") {
       url += '?category=$selectedCategory';
     }

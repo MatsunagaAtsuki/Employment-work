@@ -4,7 +4,11 @@ class OrderConfirmationScreen extends StatelessWidget {
   final Map<String, int> orderQuantities;
   final List<Map<String, dynamic>> productList;
 
-  const OrderConfirmationScreen({super.key, required this.orderQuantities, required this.productList});
+  const OrderConfirmationScreen({
+    super.key,
+    required this.orderQuantities,
+    required this.productList,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,8 +17,9 @@ class OrderConfirmationScreen extends StatelessWidget {
     }).toList();
 
     int totalAmount = orderedItems.fold(0, (sum, item) {
-      return sum + ((item["価格"] as num).toInt() * orderQuantities[item["商品ID"]]!);
-
+      double price = double.tryParse(item["価格"].toString()) ?? 0.0;
+      int quantity = orderQuantities[item["商品ID"]]!;
+      return sum + (price * quantity).toInt();
     });
 
     return Scaffold(
@@ -29,7 +34,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   var item = orderedItems[index];
                   int quantity = orderQuantities[item["商品ID"]]!;
-                  int totalPrice = item["価格"] * quantity;
+                  double price = double.tryParse(item["価格"].toString()) ?? 0.0;
+                  int totalPrice = (price * quantity).toInt();
                   return Card(
                     child: ListTile(
                       title: Text(item["商品名"]),
@@ -40,7 +46,8 @@ class OrderConfirmationScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Text("合計金額: ¥$totalAmount", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("合計金額: ¥$totalAmount",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
