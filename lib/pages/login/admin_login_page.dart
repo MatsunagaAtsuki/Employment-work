@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:inventory_manager/pages/dashboard/dashboard_screen.dart';
-import 'package:inventory_manager/pages/product/edit_product_screen.dart';
+// import 'package:inventory_manager/pages/dashboard/dashboard_screen.dart';
+// import 'package:inventory_manager/pages/product/edit_product_screen.dart';
 
 class AdminLoginPage extends StatelessWidget {
   final VoidCallback onLoginSuccess;
-  
+
   const AdminLoginPage({super.key, required this.onLoginSuccess});
 
   @override
@@ -40,12 +40,14 @@ class AdminLoginPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   // 仮の認証チェック
-                  if (usernameController.text == "" && passwordController.text == "") {
+                  if (usernameController.text == "" &&
+                      passwordController.text == "") {
                     Navigator.pop(context);
                     onLoginSuccess();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("ログイン失敗。ユーザー名またはパスワードが違います")),
+                      const SnackBar(
+                          content: Text("ログイン失敗。ユーザー名またはパスワードが違います")),
                     );
                   }
                 },

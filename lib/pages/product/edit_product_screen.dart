@@ -38,7 +38,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("商品名: ${widget.productData['商品名']} → ${nameController.text}"),
-              Text("バーコード: ${widget.productData['JANコード']} → ${barcodeController.text}"),
+              Text("バーコード: ${widget.productData['JANコード']}"), // 変更不可なので表示のみ
               Text("価格: ¥${widget.productData['価格']} → ¥${priceController.text}"),
               Text("在庫数: ${widget.productData['在庫数']} → ${stockController.text}"),
             ],
@@ -63,16 +63,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   void _updateProduct() async {
     if (_formKey.currentState!.validate()) {
-      // 更新する内容をペイロードにまとめる（カテゴリー・仕入先は含めない）
+      // 更新する内容をペイロードにまとめる（バーコードは変更させないので含めない）
       Map<String, dynamic> payload = {
         "productId": widget.productData['商品ID'],
         "name": nameController.text,
-        "barcode": barcodeController.text,
         "price": double.tryParse(priceController.text),
         "stock": int.tryParse(stockController.text),
       };
       // バックエンドURL（実行環境に合わせて必要なら変更）
       String url = 'http://127.0.0.1:5000/api/products/update';
+      //String url = 'http://10.0.2.2:5000/api/products/update';
       try {
         final response = await http.put(Uri.parse(url),
             headers: {"Content-Type": "application/json"},
@@ -110,8 +110,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 validator: (value) => value!.isEmpty ? "商品名を入力してください" : null,
               ),
               const SizedBox(height: 10),
+              // バーコードは読み取り専用にして編集不可とする
               TextFormField(
                 controller: barcodeController,
+                readOnly: true,
                 decoration: const InputDecoration(labelText: "バーコード", border: OutlineInputBorder()),
               ),
               const SizedBox(height: 10),

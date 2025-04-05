@@ -212,6 +212,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   void _applySchedule(String newPrice, String startDate, String startTime,
       String endDate) async {
     final url = 'http://127.0.0.1:5000/api/schedule';
+    //final url = 'http://10.0.2.2:5000/api/schedule';
     final payload = {
       "productId": widget.productId,
       "newPrice": newPrice,

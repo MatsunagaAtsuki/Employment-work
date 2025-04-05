@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:convert'; // HTTPレスポンスのJSONデコード用
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:inventory_manager/pages/inventory/price_change_screen.dart';
+//import 'package:inventory_manager/pages/inventory/price_change_screen.dart';
 import 'package:inventory_manager/pages/inventory/schedule_screen.dart';
 import 'package:http/http.dart' as http; // HTTPリクエスト用
 
@@ -51,6 +51,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
     // バックエンドURLを「http://127.0.0.1:5000」に統一
     final url = 'http://127.0.0.1:5000/api/products/lookup?barcode=$barcode';
+    //final url = 'http://10.0.2.2:5000/api/products/lookup?barcode=$barcode';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -88,6 +89,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   // 製品IDからスケジュール情報を取得する
   Future<void> fetchScheduleData(String productId) async {
     final url = 'http://127.0.0.1:5000/api/schedule/lookup?productId=$productId';
+    //final url = 'http://10.0.2.2:5000/api/schedule/lookup?puroductId=$productId';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
